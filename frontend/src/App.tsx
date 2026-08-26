@@ -21,6 +21,7 @@ import { Markdown } from "./lib/markdown";
 import { aspectText, lineText, planetText } from "./lib/interpretations";
 import { fmtUTC, ordinalHouse } from "./lib/format";
 import { decodeShare, encodeShare } from "./lib/share";
+import { downloadBlob, svgToPngBlob } from "./lib/exportPng";
 
 type ViewTab = "natal" | "transits" | "progressions" | "draconic" | "cycles" | "harmonics";
 
@@ -322,6 +323,21 @@ export default function App() {
           className="rounded border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-400 hover:text-zinc-100"
         >
           copy link
+        </button>
+        <button
+          onClick={async () => {
+            const svg = document.querySelector<SVGSVGElement>('svg[data-testid="astro-wheel"]');
+            if (!svg) return setError("no wheel on screen");
+            try {
+              const blob = await svgToPngBlob(svg, 2);
+              downloadBlob(blob, `chart-${payload.place?.replace(/\W+/g, "-").toLowerCase() ?? "chart"}-${Date.now()}.png`);
+            } catch (e) {
+              setError(e instanceof Error ? e.message : String(e));
+            }
+          }}
+          className="rounded border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-400 hover:text-zinc-100"
+        >
+          png ⤓
         </button>
         {sharedFromLink && (
           <button
