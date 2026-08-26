@@ -20,6 +20,7 @@ import HarmonicsView from "./components/HarmonicsView";
 import { Markdown } from "./lib/markdown";
 import { aspectText, lineText, planetText } from "./lib/interpretations";
 import { fmtUTC, ordinalHouse } from "./lib/format";
+import { decodeShare, encodeShare } from "./lib/share";
 
 type ViewTab = "natal" | "transits" | "progressions" | "draconic" | "cycles" | "harmonics";
 
@@ -64,6 +65,7 @@ export default function App() {
   const [showParans, setShowParans] = useState(true);
   const [mapMarkers, setMapMarkers] = useState<Array<{ lat: number; lon: number; label: string; color: string }>>([]);
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
+  const [sharedFromLink, setSharedFromLink] = useState<string | null>(null);
 
   const payload: BirthInputPayload = useMemo(
     () => ({
@@ -112,9 +114,33 @@ export default function App() {
     [],
   );
 
-  // auto-cast the seed profile on first load if none exists yet
+  // auto-cast on first load: a shared #p= permalink wins over the seed profile
   useEffect(() => {
-    if (!natal && !busy) castAll(payload);
+    if (natal || busy) return;
+    const h = window.location.hash;
+    const dec = h.startsWith("#p=") ? decodeShare(h.slice(3)) : null;
+    if (!dec) {
+      castAll(payload);
+      return;
+    }
+    const shared: BirthInputPayload = {
+      local_dt: dec.d,
+      place: dec.n,
+      lat: dec.la,
+      lon: dec.lo,
+      tz_name: dec.tz,
+      house_system: dec.house_system,
+    };
+    setForm({
+      local_dt: dec.d,
+      place: dec.n ?? "",
+      lat: dec.la,
+      lon: dec.lo,
+      tz_name: dec.tz,
+      house_system: dec.house_system,
+    });
+    setSharedFromLink(dec.n);
+    castAll(shared);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -285,6 +311,27 @@ export default function App() {
         <button onClick={deleteProfile} className="text-xs text-zinc-400 hover:text-red-400">
           delete
         </button>
+        <button
+          onClick={() => {
+            const url = `${window.location.origin}${window.location.pathname}#p=${encodeShare(form, payload.place ?? undefined)}`;
+            navigator.clipboard.writeText(url).then(
+              () => setSharedFromLink(`link copied — ${url.slice(0, 48)}…`),
+              () => setError("clipboard blocked"),
+            );
+          }}
+          className="rounded border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-400 hover:text-zinc-100"
+        >
+          copy link
+        </button>
+        {sharedFromLink && (
+          <button
+            onClick={() => setSharedFromLink(null)}
+            className="rounded bg-indigo-500/15 px-1.5 py-0.5 text-[10px] text-indigo-300"
+            title="click to dismiss"
+          >
+            ⤿ {sharedFromLink} ✕
+          </button>
+        )}
 
         <div className="ml-auto">
           <BirthForm
