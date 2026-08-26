@@ -18,6 +18,7 @@ import InterpretationCard from "./components/InterpretationCard";
 import CyclesView from "./components/CyclesView";
 import HarmonicsView from "./components/HarmonicsView";
 import ReportView from "./components/ReportView";
+import ReadingsPanel from "./components/ReadingsPanel";
 import { Markdown } from "./lib/markdown";
 import { aspectText, lineText, planetText } from "./lib/interpretations";
 import { fmtUTC, ordinalHouse } from "./lib/format";
@@ -68,6 +69,7 @@ export default function App() {
   const [mapMarkers, setMapMarkers] = useState<Array<{ lat: number; lon: number; label: string; color: string }>>([]);
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   const [sharedFromLink, setSharedFromLink] = useState<string | null>(null);
+  const [showJournal, setShowJournal] = useState(false);
 
   const payload: BirthInputPayload = useMemo(
     () => ({
@@ -172,7 +174,8 @@ export default function App() {
   const saveProfile = async () => {
     const name = window.prompt("Profile name:", form.place?.split(",")[0] ?? "New profile");
     if (!name) return;
-    await api.createProfile(name, payload);
+    const created = await api.createProfile(name, payload);
+    setProfileId(created.id); // journal targets the profile just saved
     const ps = await api.profiles();
     setProfiles(ps);
   };
@@ -410,6 +413,12 @@ export default function App() {
                 {label}
               </button>
             ))}
+            <button
+              onClick={() => setShowJournal(!showJournal)}
+              className={`rounded-t-md px-2 py-1.5 text-xs transition ${showJournal ? "bg-zinc-900 text-indigo-300" : "text-zinc-500 hover:text-zinc-300"}`}
+            >
+              Journal ✎
+            </button>
             {selectedEvent && (
               <button
                 onClick={() => setSelectedEvent(null)}
@@ -471,6 +480,15 @@ export default function App() {
                   {selection.text ? <Markdown text={selection.text} /> : <p className="text-xs text-zinc-500">No delineation available.</p>}
                 </InterpretationCard>
               </div>
+            )}
+            {showJournal && (
+              <aside className="absolute inset-y-0 right-0 z-20 w-80 border-l border-zinc-800 bg-zinc-950/95 shadow-2xl backdrop-blur">
+                <ReadingsPanel
+                  profileId={profileId}
+                  currentTransits={tab === "transits" || selectedEvent ? transits : null}
+                  selectedEvent={selectedEvent}
+                />
+              </aside>
             )}
           </div>
 

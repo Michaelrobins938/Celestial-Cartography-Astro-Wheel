@@ -6,6 +6,7 @@ import type {
   PlaceHit,
   Profile,
   ProgressionChart,
+  Reading,
   TimelinePayload,
   TransitPayload,
 } from "./types";
@@ -18,6 +19,25 @@ const u = (path: string): string => `${API_BASE}${path}`;
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
     method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const j = await res.json();
+      detail = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail);
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+  return res.json() as Promise<T>;
+}
+
+async function put<T>(url: string, body: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method: "PUT",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
@@ -102,4 +122,19 @@ export const api = {
 
   deleteProfile: (id: number) =>
     fetch(u(`/api/profiles/${id}`), { method: "DELETE" }).then((r) => r.json()),
+
+  readings: (pid: number): Promise<Reading[]> =>
+    fetch(u(`/api/profiles/${pid}/readings`)).then(async (r) => {
+      if (!r.ok) throw new Error("readings fetch failed");
+      return r.json() as Promise<Reading[]>;
+    }),
+
+  createReading: (pid: number, data: { title: string; focus?: string | null; body_md?: string; snapshot_json?: string | null }): Promise<Reading> =>
+    post(u(`/api/profiles/${pid}/readings`), data),
+
+  updateReading: (id: number, patch: Partial<Pick<Reading, "title" | "focus" | "body_md" | "snapshot_json">>): Promise<Reading> =>
+    put(u(`/api/readings/${id}`), patch),
+
+  deleteReading: (id: number) =>
+    fetch(u(`/api/readings/${id}`), { method: "DELETE" }).then((r) => r.json()),
 };

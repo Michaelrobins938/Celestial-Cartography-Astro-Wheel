@@ -258,3 +258,15 @@ export interface HarmonicsPayload {
   };
   summary: { hor_mean_err: number; tb_mean_err: number; tb_pluto_fail: number };
 }
+
+// ---------- Readings journal ----------
+
+export interface Reading {
+  id: number;
+  profile_id: number;
+  created_at: string | null;
+  title: string;
+  focus: string | null;
+  body_md: string;
+  snapshot_json: string | null;
+}
