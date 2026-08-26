@@ -3,7 +3,8 @@
 // journal data is kept in localStorage; the backend CRUD endpoints remain
 // available for self-hosted deployments with a durable database.
 
-import type { BirthInputPayload, Profile, Reading } from "../types";
+import type { BirthInputPayload } from "../api";
+import type { Profile, Reading } from "../types";
 
 const PROFILES_KEY = "cb.profiles";
 const READINGS_KEY = "cb.readings";
@@ -31,9 +32,9 @@ export const store = {
       name,
       birth_local: b.local_dt,
       place_name: b.place ?? "",
-      lat: b.lat,
-      lon: b.lon,
-      tz_name: b.tz_name,
+      lat: b.lat ?? 0,
+      lon: b.lon ?? 0,
+      tz_name: b.tz_name ?? null,
       house_system: b.house_system ?? "P",
     };
     writeList(PROFILES_KEY, [p, ...store.profiles()]);
