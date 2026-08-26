@@ -1,5 +1,10 @@
 # Celestial Blueprint
 
+<p align="center">
+  <a href="https://celestial-blueprint-xi.vercel.app"><img src="https://img.shields.io/badge/Live%20demo%20%E2%80%94%20Vercel-000000?logo=vercel&logoColor=white" alt="Live demo on Vercel"/></a>
+  <img src="https://img.shields.io/badge/deploys%20via-GitHub%20%E2%86%92%20Vercel-6600cc" alt="Deploys via GitHub to Vercel"/>
+</p>
+
 Full-stack astrology charting tool — Swiss Ephemeris precision, bi-wheel visualization,
 transit timeline with curated interpretations, and harmonic orbit resonance analysis.
 
