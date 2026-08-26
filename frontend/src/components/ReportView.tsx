@@ -6,6 +6,7 @@ import type {
   AspectHit,
   Chart,
   HarmonicsPayload,
+  ProgressionChart,
   TimelineEvent,
   TimelinePayload,
   TransitPayload,
@@ -20,6 +21,8 @@ type Loaded =
   | {
       state: "ready";
       natal: Chart;
+      progressions: ProgressionChart;
+      draconic: Chart;
       transits: TransitPayload;
       timeline: TimelinePayload;
       harmonics: HarmonicsPayload;
@@ -27,15 +30,36 @@ type Loaded =
 
 const STATION_BODIES = ["Mercury", "Venus", "Mars", "Jupiter", "Saturn"];
 
+const SIGNS = [
+  "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+  "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
+];
+
+function fmtLon(lon: number): string {
+  const l = ((lon % 360) + 360) % 360;
+  const sign = SIGNS[Math.floor(l / 30)];
+  const within = l % 30;
+  const d = Math.floor(within);
+  const m = Math.round((within - d) * 60);
+  return `${sign} ${d}°${String(m === 60 ? 0 : m).padStart(2, "0")}′`;
+}
+
 export default function ReportView({ payload }: { payload: BirthInputPayload }) {
   const [doc, setDoc] = useState<Loaded>({ state: "loading" });
 
   useEffect(() => {
     let alive = true;
-    Promise.all([api.natal(payload), api.transits(payload), api.timeline(365), api.harmonics()])
+    Promise.all([
+      api.natal(payload),
+      api.progressions(payload),
+      api.draconic(payload),
+      api.transits(payload),
+      api.timeline(365),
+      api.harmonics(),
+    ])
       .then(
-        ([natal, transits, timeline, harmonics]) =>
-          alive && setDoc({ state: "ready", natal, transits, timeline, harmonics }),
+        ([natal, progressions, draconic, transits, timeline, harmonics]) =>
+          alive && setDoc({ state: "ready", natal, progressions, draconic, transits, timeline, harmonics }),
       )
       .catch((e) => alive && setDoc({ state: "error", message: e instanceof Error ? e.message : String(e) }));
     return () => {
@@ -48,7 +72,13 @@ export default function ReportView({ payload }: { payload: BirthInputPayload }) 
       <div className="no-print mb-2 flex items-center justify-end gap-2">
         <span className="text-[11px] text-zinc-500">client-ready reading</span>
         <button
-          onClick={() => window.print()}
+          onClick={() => {
+            // collapsed <details> bodies never reach the printed page — open them all first
+            document.querySelectorAll("#report-sheet details").forEach((d) => {
+              (d as HTMLDetailsElement).open = true;
+            });
+            window.print();
+          }}
           disabled={doc.state !== "ready"}
           title="Opens the print dialog — choose “Save as PDF”"
           className="rounded border border-zinc-600 bg-zinc-900 px-3 py-1 text-[11px] text-zinc-200 hover:text-white disabled:opacity-40"
@@ -67,12 +97,16 @@ export default function ReportView({ payload }: { payload: BirthInputPayload }) 
 
 function ReportBody({
   natal,
+  progressions,
+  draconic,
   transits,
   timeline,
   harmonics,
   payload,
 }: {
   natal: Chart;
+  progressions: ProgressionChart;
+  draconic: Chart;
   transits: TransitPayload;
   timeline: TimelinePayload;
   harmonics: HarmonicsPayload;
@@ -83,6 +117,7 @@ function ReportBody({
   const stations = timeline.events.filter(
     (e) => e.event_type === "STATION" && STATION_BODIES.includes(e.primary_body.name),
   );
+  const tightestDraconic = [...draconic.aspects].sort((a, b) => a.orb - b.orb).slice(0, 6);
   const worstOmega =
     harmonics.links.length > 0 ? Math.max(...harmonics.links.map((l) => l.omega)) : 0;
 
@@ -162,6 +197,101 @@ function ReportBody({
           </details>
         );
       })}
+
+      <hr className="alm-rule" />
+
+      {/* Secondary Progressions */}
+      <h2 className="alm-head">Secondary Progressions</h2>
+      <p style={{ fontSize: "0.85rem", color: "var(--alm-muted)" }}>
+        {progressions.method} — one day for each year of life. Sky for{" "}
+        {progressions.prog_date.slice(0, 10)} ({progressions.days} days after birth).
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Body</th>
+            <th>Progressed position</th>
+            <th>Motion</th>
+          </tr>
+        </thead>
+        <tbody>
+          {progressions.bodies.map((b) => (
+            <tr key={b.name}>
+              <td>
+                {b.glyph} {b.name}
+              </td>
+              <td>
+                {b.sign} {b.degree_str}
+              </td>
+              <td>{b.retrograde ? "℞ retrograde" : "direct"}</td>
+            </tr>
+          ))}
+          <tr>
+            <td>ASC</td>
+            <td>{fmtLon(progressions.angles.asc)}</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>MC</td>
+            <td>{fmtLon(progressions.angles.mc)}</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr className="alm-rule" />
+
+      {/* Draconic Chart */}
+      <h2 className="alm-head">The Draconic Chart</h2>
+      <p style={{ fontSize: "0.85rem", color: "var(--alm-muted)" }}>
+        The same planets re-referenced to the North Node — the soul-level frame of
+        the chart. Where a draconic planet sits on a natal angle or luminary, the
+        theme runs deep.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Body</th>
+            <th>Draconic position</th>
+            <th>Motion</th>
+          </tr>
+        </thead>
+        <tbody>
+          {draconic.bodies.map((b) => (
+            <tr key={b.name}>
+              <td>
+                {b.glyph} {b.name}
+              </td>
+              <td>
+                {b.sign} {b.degree_str}
+              </td>
+              <td>{b.retrograde ? "℞ retrograde" : "direct"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {tightestDraconic.length > 0 && (
+        <>
+          <p style={{ marginTop: "0.8rem", fontSize: "0.85rem", color: "var(--alm-muted)" }}>
+            Tightest draconic aspects:
+          </p>
+          {tightestDraconic.map((a, i) => {
+            const text = aspectText(a.type);
+            return (
+              <details key={i} style={{ marginBottom: "0.35rem" }}>
+                <summary style={{ cursor: "pointer", fontSize: "0.86rem" }}>
+                  {a.a_name} {a.glyph} {a.b_name} · orb {a.orb.toFixed(1)}°
+                </summary>
+                {text && (
+                  <div className="prose-paper" style={{ padding: "0.4rem 0.8rem", fontSize: "0.84rem" }}>
+                    <Markdown text={text} />
+                  </div>
+                )}
+              </details>
+            );
+          })}
+        </>
+      )}
 
       <hr className="alm-rule" />
 
