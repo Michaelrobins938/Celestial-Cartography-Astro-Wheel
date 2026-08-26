@@ -340,8 +340,9 @@ export default function App() {
             }
           }}
           className="rounded border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-400 hover:text-zinc-100"
+          title="Download the natal wheel as a PNG image"
         >
-          png ⤓
+          ⤓ png
         </button>
         {sharedFromLink && (
           <button

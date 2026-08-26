@@ -36,23 +36,26 @@ Seed profile: 1995-08-31 07:08, Fort Worth TX.
 
 ## Deployment
 
-| Piece | Host | Notes |
+Everything runs on **Vercel** — pushes to `master` deploy automatically
+(GitHub → Vercel integration).
+
+| Piece | How it runs | Notes |
 | --- | --- | --- |
-| Frontend | Vercel | live; repo-connected or CLI deploys |
-| Backend | Render | `render.yaml` blueprint in repo root |
+| Frontend | static build (`frontend/dist`) | `vercel.json` drives the build |
+| Backend | serverless Python fn (`api/index.py` mounts FastAPI) | `/api/*` rewritten same-origin; ephemeris bundled from `backend/data` |
 
-After the Render service exists:
+**Data persistence:** charting is stateless, but profiles + readings journal are stored
+in **browser localStorage** (per device/browser). The backend's SQLite endpoints remain
+available for self-hosted deployments with a durable database — on Vercel the function
+filesystem is ephemeral, so `CELESTIAL_DB=/tmp/celestial.db` only survives per warm
+instance and is not used for durable storage.
 
-1. Copy its URL (e.g. `https://celestial-blueprint-api.onrender.com`).
-2. In Vercel → project → Settings → Environment Variables, set
-   `VITE_API_BASE = https://celestial-blueprint-api.onrender.com`.
-3. Redeploy the frontend.
+### Self-hosting alternatives
 
-Until `VITE_API_BASE` is set, deployed builds call same-origin `/api/*` and show errors —
-local dev is unaffected (vite proxy).
-
-⚠️ Render free tier: SQLite resets on deploy/restart (ephemeral disk). Attach a disk for
-persistence, or treat profiles as disposable.
+- `render.yaml` (repo root) deploys the backend as a Render web service — set
+  `VITE_API_BASE` on the frontend to its URL if you prefer a long-running process.
+- Any host running `uvicorn app.main:app` works; point the frontend at it via
+  `VITE_API_BASE`.
 
 ## Design docs
 

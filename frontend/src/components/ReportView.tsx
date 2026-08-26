@@ -45,6 +45,17 @@ export default function ReportView({ payload }: { payload: BirthInputPayload }) 
 
   return (
     <div className="report-wrap">
+      <div className="no-print mb-2 flex items-center justify-end gap-2">
+        <span className="text-[11px] text-zinc-500">client-ready reading</span>
+        <button
+          onClick={() => window.print()}
+          disabled={doc.state !== "ready"}
+          title="Opens the print dialog — choose “Save as PDF”"
+          className="rounded border border-zinc-600 bg-zinc-900 px-3 py-1 text-[11px] text-zinc-200 hover:text-white disabled:opacity-40"
+        >
+          ⤓ export pdf
+        </button>
+      </div>
       <article id="report-sheet" className="almanac">
         {doc.state === "loading" && <p>Composing the document…</p>}
         {doc.state === "error" && <p role="alert">Could not assemble the report: {doc.message}</p>}
