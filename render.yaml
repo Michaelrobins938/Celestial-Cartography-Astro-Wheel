@@ -1,0 +1,19 @@
+# Render Blueprint — deploys the FastAPI backend as a web service.
+# Create the service from the Render dashboard: New + → Blueprint → pick this repo.
+#
+# NOTE: SQLite (celestial.db) lives on an ephemeral disk on free plans —
+# profiles/readings reset on every deploy or restart. Attach a persistent
+# disk (paid) or accept resets for now.
+
+services:
+  - type: web
+    name: celestial-blueprint-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/profiles
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.4"
