@@ -25,3 +25,7 @@ dist/
 Thumbs.db
 
 .vercel/
+
+# build artifacts
+frontend/tsconfig.tsbuildinfo
+**/tsconfig.tsbuildinfo

@@ -16,16 +16,25 @@ export default function ReadingsPanel({
   const [editing, setEditing] = useState<{ title: string; focus: string; body_md: string } | null>(null);
   const [openId, setOpenId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   const reload = useCallback(() => {
     if (profileId == null) return setEntries([]);
-    api.readings(profileId).then(setEntries).catch(() => setEntries([]));
+    api.readings(profileId).then(setEntries).catch(() => setErr("Could not load the journal."));
   }, [profileId]);
   useEffect(reload, [reload]);
 
   if (profileId == null) {
     return <p className="p-3 text-xs text-zinc-600">Save the profile first to keep a journal.</p>;
   }
+
+  const safeSnap = (raw: string): string => {
+    try {
+      return JSON.stringify(JSON.parse(raw), null, 1);
+    } catch {
+      return raw;
+    }
+  };
 
   const snapshot = (): string | null => {
     if (!currentTransits && !selectedEvent) return null;
@@ -35,6 +44,7 @@ export default function ReadingsPanel({
   const save = async () => {
     if (!editing || !editing.title.trim()) return;
     setBusy(true);
+    setErr(null);
     try {
       await api.createReading(profileId, {
         title: editing.title.trim(),
@@ -44,6 +54,8 @@ export default function ReadingsPanel({
       });
       setEditing(null);
       reload();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not save the entry.");
     } finally {
       setBusy(false);
     }
@@ -60,6 +72,8 @@ export default function ReadingsPanel({
           {editing ? "cancel" : "＋ new"}
         </button>
       </div>
+
+      {err && !editing && <p className="px-3 text-[10px] text-red-400">{err}</p>}
 
       {editing && (
         <div className="space-y-1.5 border-y border-zinc-800 bg-zinc-900/50 p-2">
@@ -89,6 +103,7 @@ export default function ReadingsPanel({
           >
             {busy ? "saving…" : currentTransits || selectedEvent ? "save + snapshot sky ⌗" : "save"}
           </button>
+          {err && <p className="text-[10px] text-red-400">{err}</p>}
         </div>
       )}
 
@@ -111,15 +126,22 @@ export default function ReadingsPanel({
                 {en.snapshot_json && (
                   <details>
                     <summary className="cursor-pointer text-[10px] text-indigo-400/80">frozen sky snapshot ⌗</summary>
-                    <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap rounded bg-zinc-950 p-1.5 font-mono text-[9px] text-zinc-500">
-                      {JSON.stringify(JSON.parse(en.snapshot_json), null, 1).slice(0, 2000)}
-                    </pre>
+                     <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap rounded bg-zinc-950 p-1.5 font-mono text-[9px] text-zinc-500">
+                       {safeSnap(en.snapshot_json).slice(0, 2000)}
+                     </pre>
                   </details>
                 )}
-                <button
-                  onClick={async () => { await api.deleteReading(en.id); reload(); }}
-                  className="text-[10px] text-red-400/70 hover:text-red-300"
-                >
+                 <button
+                   onClick={async () => {
+                     try {
+                       await api.deleteReading(en.id);
+                       reload();
+                     } catch (e) {
+                       setErr(e instanceof Error ? e.message : "Could not delete the entry.");
+                     }
+                   }}
+                   className="text-[10px] text-red-400/70 hover:text-red-300"
+                 >
                   delete
                 </button>
               </div>
