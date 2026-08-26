@@ -10,6 +10,11 @@ import type {
   TransitPayload,
 } from "./types";
 
+/** Backend origin. Empty = same-origin (vite dev proxy); set VITE_API_BASE for deployed builds. */
+export const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+
+const u = (path: string): string => `${API_BASE}${path}`;
+
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
     method: "POST",
@@ -40,24 +45,24 @@ export interface BirthInputPayload {
 
 export const api = {
   geocode: (q: string): Promise<PlaceHit[]> =>
-    fetch(`/api/geocode?q=${encodeURIComponent(q)}`).then((r) => r.json()),
+    fetch(u(`/api/geocode?q=${encodeURIComponent(q)}`)).then((r) => r.json()),
 
-  natal: (b: BirthInputPayload) => post<Chart>("/api/chart/natal", b),
+  natal: (b: BirthInputPayload) => post<Chart>(u("/api/chart/natal"), b),
 
   transits: (b: BirthInputPayload, transitUtc?: string) =>
-    post<TransitPayload>("/api/chart/transits", { ...b, transit_dt: transitUtc }),
+    post<TransitPayload>(u("/api/chart/transits"), { ...b, transit_dt: transitUtc }),
 
   progressions: (b: BirthInputPayload, progDate?: string) =>
-    post<ProgressionChart>("/api/chart/progressions", { ...b, prog_date: progDate }),
+    post<ProgressionChart>(u("/api/chart/progressions"), { ...b, prog_date: progDate }),
 
-  draconic: (b: BirthInputPayload) => post<Chart>("/api/chart/draconic", b),
+  draconic: (b: BirthInputPayload) => post<Chart>(u("/api/chart/draconic"), b),
 
   astrocartography: (b: BirthInputPayload) =>
-    post<Astrocartography>("/api/astrocartography", b),
+    post<Astrocartography>(u("/api/astrocartography"), b),
 
   relocate: (utcBirth: string, lat: number, lon: number, houseSystem: string) =>
     // Power-user bypass: pass the resolved UTC + coords directly.
-    fetch("/api/relocate", {
+    fetch(u("/api/relocate"), {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -72,29 +77,29 @@ export const api = {
       return r.json() as Promise<Chart>;
     }),
 
-  profiles: (): Promise<Profile[]> => fetch("/api/profiles").then((r) => r.json()),
+  profiles: (): Promise<Profile[]> => fetch(u("/api/profiles")).then((r) => r.json()),
 
   cycles: (days: number): Promise<CyclesPayload> =>
-    fetch(`/api/cycles?days=${days}`).then(async (r) => {
+    fetch(u(`/api/cycles?days=${days}`)).then(async (r) => {
       if (!r.ok) throw new Error("cycles fetch failed");
       return r.json() as Promise<CyclesPayload>;
     }),
 
   timeline: (days: number): Promise<TimelinePayload> =>
-    fetch(`/api/timeline?days=${days}`).then(async (r) => {
+    fetch(u(`/api/timeline?days=${days}`)).then(async (r) => {
       if (!r.ok) throw new Error("timeline fetch failed");
       return r.json() as Promise<TimelinePayload>;
     }),
 
   harmonics: (): Promise<HarmonicsPayload> =>
-    fetch("/api/harmonics").then(async (r) => {
+    fetch(u("/api/harmonics")).then(async (r) => {
       if (!r.ok) throw new Error("harmonics fetch failed");
       return r.json() as Promise<HarmonicsPayload>;
     }),
 
   createProfile: (name: string, b: BirthInputPayload) =>
-    post<{ id: number; name: string }>("/api/profiles", { ...b, name }),
+    post<{ id: number; name: string }>(u("/api/profiles"), { ...b, name }),
 
   deleteProfile: (id: number) =>
-    fetch(`/api/profiles/${id}`, { method: "DELETE" }).then((r) => r.json()),
+    fetch(u(`/api/profiles/${id}`), { method: "DELETE" }).then((r) => r.json()),
 };
