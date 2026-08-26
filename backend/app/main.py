@@ -63,6 +63,20 @@ class ProfileCreate(BirthInput):
     name: str
 
 
+class ReadingCreate(BaseModel):
+    title: str = Field(..., min_length=1)
+    focus: str | None = None
+    body_md: str = ""
+    snapshot_json: str | None = None
+
+
+class ReadingUpdate(BaseModel):
+    title: str | None = None
+    focus: str | None = None
+    body_md: str | None = None
+    snapshot_json: str | None = None
+
+
 # ---------- Helpers ----------
 
 def _resolve_birth(input: BirthInput) -> tuple[datetime, float, float, str | None]:
@@ -212,5 +226,68 @@ def delete_profile(pid: int):
         if not p:
             raise HTTPException(404, "Profile not found")
         s.delete(p)
+        s.commit()
+        return {"ok": True}
+
+
+def _reading_dict(r: models.Reading) -> dict:
+    return {
+        "id": r.id,
+        "profile_id": r.profile_id,
+        "created_at": r.created_at.isoformat() + "Z" if r.created_at else None,
+        "title": r.title,
+        "focus": r.focus,
+        "body_md": r.body_md,
+        "snapshot_json": r.snapshot_json,
+    }
+
+
+@app.get("/api/profiles/{pid}/readings")
+def list_readings(pid: int):
+    with models.SessionLocal() as s:
+        rows = (
+            s.query(models.Reading)
+            .filter_by(profile_id=pid)
+            .order_by(models.Reading.created_at.desc(), models.Reading.id.desc())
+            .all()
+        )
+        return [_reading_dict(r) for r in rows]
+
+
+@app.post("/api/profiles/{pid}/readings", status_code=201)
+def create_reading(pid: int, req: ReadingCreate):
+    with models.SessionLocal() as s:
+        if not s.query(models.Profile).get(pid):
+            raise HTTPException(404, "Profile not found")
+        r = models.Reading(
+            profile_id=pid, title=req.title, focus=req.focus,
+            body_md=req.body_md, snapshot_json=req.snapshot_json,
+        )
+        s.add(r)
+        s.commit()
+        s.refresh(r)
+        return _reading_dict(r)
+
+
+@app.put("/api/readings/{rid}")
+def update_reading(rid: int, req: ReadingUpdate):
+    with models.SessionLocal() as s:
+        r = s.query(models.Reading).get(rid)
+        if not r:
+            raise HTTPException(404, "Reading not found")
+        for k, v in req.model_dump(exclude_none=True).items():
+            setattr(r, k, v)
+        s.commit()
+        s.refresh(r)
+        return _reading_dict(r)
+
+
+@app.delete("/api/readings/{rid}")
+def delete_reading(rid: int):
+    with models.SessionLocal() as s:
+        r = s.query(models.Reading).get(rid)
+        if not r:
+            raise HTTPException(404, "Reading not found")
+        s.delete(r)
         s.commit()
         return {"ok": True}

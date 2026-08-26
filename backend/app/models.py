@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from sqlalchemy import Column, DateTime, Float, Integer, String, create_engine
+from sqlalchemy import Column, DateTime, Float, Integer, String, Text, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 Base = declarative_base()
@@ -59,6 +59,20 @@ class EventInterpretation(Base):
     position_str = Column(String)              # e.g. "Gemini 5°42'"
     category = Column(String, index=True)      # Eclipse / Aspect / Ingress / Station / ...
     text = Column(String, nullable=False)
+
+
+class Reading(Base):
+    """A dated session note attached to a profile, with optional frozen sky snapshot."""
+
+    __tablename__ = "readings"
+
+    id = Column(Integer, primary_key=True)
+    profile_id = Column(Integer, nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    title = Column(String, nullable=False)
+    focus = Column(String)                      # free tag: career / love / eclipse …
+    body_md = Column(String, default="")
+    snapshot_json = Column(Text)                # frozen TransitsPayload + selected timeline event
 
 
 def seed_event_interpretations() -> int:
