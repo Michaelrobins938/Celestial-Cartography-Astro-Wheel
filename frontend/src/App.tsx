@@ -99,12 +99,13 @@ export default function App() {
         setNatal(n);
         setRelocated(null);
         setMapMarkers([{ lat: n.lat, lon: n.lon, label: "birthplace", color: "#fafafa" }]);
-        // parallel secondary fetches
-        api.transits(p).then(setTransits).catch(() => {});
-        api.progressions(p).then(setProgressions).catch(() => {});
-        api.draconic(p).then(setDraconic).catch(() => {});
+        // sequential, not parallel: keeps every request on one warm serverless
+        // instance so the SQLite-backed profiles/readings stay consistent
+        await api.transits(p).then(setTransits).catch(() => {});
+        await api.progressions(p).then(setProgressions).catch(() => {});
+        await api.draconic(p).then(setDraconic).catch(() => {});
         setAcgLoading(true);
-        api
+        await api
           .astrocartography(p)
           .then((a) => setAcg(a))
           .catch(() => {})
