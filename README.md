@@ -59,3 +59,5 @@ persistence, or treat profiles as disposable.
 - `docs/superpowers/specs/2026-08-26-reading-workflow-design.md` — reading workflow
   (PDF report, PNG export, readings journal, stateless share links)
 - `astrology_timeline.xlsx` — source of the curated interpretation seed
+
+_Deploys automatically from `master` via the GitHub → Vercel integration._
