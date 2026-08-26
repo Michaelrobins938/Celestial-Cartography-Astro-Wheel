@@ -24,6 +24,7 @@ import { aspectText, lineText, planetText } from "./lib/interpretations";
 import { fmtUTC, ordinalHouse } from "./lib/format";
 import { decodeShare, encodeShare } from "./lib/share";
 import { downloadBlob, svgToPngBlob } from "./lib/exportPng";
+import { store } from "./lib/store";
 
 type ViewTab = "natal" | "transits" | "progressions" | "draconic" | "cycles" | "harmonics" | "report";
 
@@ -84,10 +85,9 @@ export default function App() {
   );
 
   useEffect(() => {
-    api.profiles().then((ps) => {
-      setProfiles(ps);
-      if (ps.length) setProfileId(ps[0].id);
-    });
+    const ps = store.profiles();
+    setProfiles(ps);
+    if (ps.length) setProfileId(ps[0].id);
   }, []);
 
   const castAll = useCallback(
@@ -175,16 +175,15 @@ export default function App() {
   const saveProfile = async () => {
     const name = window.prompt("Profile name:", form.place?.split(",")[0] ?? "New profile");
     if (!name) return;
-    const created = await api.createProfile(name, payload);
+    const created = store.createProfile(name, payload);
     setProfileId(created.id); // journal targets the profile just saved
-    const ps = await api.profiles();
-    setProfiles(ps);
+    setProfiles(store.profiles());
   };
 
   const deleteProfile = async () => {
     if (profileId == null) return;
-    await api.deleteProfile(profileId);
-    const ps = await api.profiles();
+    await store.deleteProfile(profileId);
+    const ps = store.profiles();
     setProfiles(ps);
     setProfileId(ps[0]?.id ?? null);
   };

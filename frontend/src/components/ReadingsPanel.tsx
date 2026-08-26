@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { api } from "../api";
+import { store } from "../lib/store";
 import type { Reading, TimelineEvent, TransitPayload } from "../types";
 import { Markdown } from "../lib/markdown";
 
@@ -20,7 +20,7 @@ export default function ReadingsPanel({
 
   const reload = useCallback(() => {
     if (profileId == null) return setEntries([]);
-    api.readings(profileId).then(setEntries).catch(() => setErr("Could not load the journal."));
+    setEntries(store.readings(profileId));
   }, [profileId]);
   useEffect(reload, [reload]);
 
@@ -46,7 +46,7 @@ export default function ReadingsPanel({
     setBusy(true);
     setErr(null);
     try {
-      await api.createReading(profileId, {
+      store.createReading(profileId, {
         title: editing.title.trim(),
         focus: editing.focus.trim() || null,
         body_md: editing.body_md,
@@ -134,7 +134,7 @@ export default function ReadingsPanel({
                  <button
                    onClick={async () => {
                      try {
-                       await api.deleteReading(en.id);
+                       store.deleteReading(en.id);
                        reload();
                      } catch (e) {
                        setErr(e instanceof Error ? e.message : "Could not delete the entry.");
