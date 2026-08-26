@@ -1,0 +1,66 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-zinc-950 text-zinc-200 antialiased;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif,
+    "Segoe UI Symbol",
+    "Arial Unicode MS",
+    "Noto Sans Symbols",
+    Quivira,
+    "Symbola",
+    "DejaVu Sans";
+}
+
+/* ---------- leaflet dark theme ---------- */
+.leaflet-container {
+  background: #09090b;
+  font-family: inherit;
+}
+.leaflet-control-attribution {
+  background: rgba(24, 24, 27, 0.8) !important;
+  color: #71717a !important;
+}
+.leaflet-bar a {
+  background: #27272a !important;
+  color: #e4e4e7 !important;
+  border-color: #3f3f46 !important;
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #18181b;
+  color: #e4e4e7;
+  border: 1px solid #3f3f46;
+}
+
+.acg-line {
+  fill: none;
+  stroke-width: 1.6;
+  opacity: 0.75;
+}
+.acg-line:hover {
+  stroke-width: 3;
+  opacity: 1;
+}
+
+/* thin scrollbars for the dashboard */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3f3f46 transparent;
+}
