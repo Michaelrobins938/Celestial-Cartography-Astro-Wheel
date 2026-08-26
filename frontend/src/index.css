@@ -64,3 +64,79 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #3f3f46 transparent;
 }
+
+/* ---------- Hallmark · macrostructure: Long Document · tone: almanac · anchor hue: 65 ----------
+ * Almanac theme: light warm paper / roman-serif display / ochre accent.
+ * Scoped to .almanac — the app chrome keeps its own zinc/indigo identity. */
+
+.almanac {
+  --alm-paper: oklch(96% 0.012 85);
+  --alm-paper-deep: oklch(93% 0.016 85);
+  --alm-ink: oklch(26% 0.014 85);
+  --alm-muted: oklch(46% 0.016 85);
+  --alm-accent: oklch(52% 0.11 65);
+  --alm-rule: oklch(80% 0.02 85);
+  --alm-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  background: var(--alm-paper);
+  color: var(--alm-ink);
+  font-family: var(--alm-display);
+  line-height: 1.68;
+}
+
+.almanac h1, .almanac h2, .almanac h3 { font-style: normal; font-weight: 600; }
+.almanac .alm-head {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--alm-accent);
+  margin-top: 2.2rem;
+  margin-bottom: 0.55rem;
+}
+.almanac .alm-rule { border: 0; border-top: 1px solid var(--alm-rule); margin: 2rem 0; }
+.almanac table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.almanac th { text-align: left; font-weight: 600; padding: 0.28rem 0.5rem;
+  border-bottom: 1px solid var(--alm-rule); font-variant: small-caps; }
+.almanac td { padding: 0.24rem 0.5rem; border-bottom: 1px solid var(--alm-paper-deep); }
+.almanac .alm-figure { margin: 1.6rem auto; max-width: 30rem; }
+.almanac .alm-figure figcaption { font-size: 0.75rem; color: var(--alm-muted);
+  text-align: center; margin-top: 0.4rem; }
+
+/* Markdown delineations rendered on paper: override the dark-chrome zinc utilities. */
+.almanac .prose-paper,
+.almanac .prose-paper p,
+.almanac .prose-paper strong,
+.almanac .prose-paper em {
+  color: var(--alm-ink);
+}
+.almanac .prose-paper p:first-child { margin-top: 0; }
+
+/* Screen-only paper sheet framing */
+.report-wrap { overflow-y: auto; height: 100%; display: flex; justify-content: center; padding: 1rem; }
+#report-sheet { width: 210mm; max-width: 96vw; padding: 18mm; box-shadow: 0 2px 24px rgb(0 0 0 / 0.45); }
+
+/* ---------- print: A4, hide everything but the sheet ---------- */
+.no-print { /* marker class; screen shows chrome normally */ }
+@media print {
+  @page { size: A4; margin: 18mm; }
+  html, body, #root { height: auto !important; overflow: visible !important; }
+  body { background: white !important; }
+  .no-print { display: none !important; }
+  /* neutralize the dark chrome backgrounds/padding along the print path */
+  #root div, #root main, #root section {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: none !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+  .report-wrap { padding: 0 !important; overflow: visible; display: block; height: auto; }
+  #root #report-sheet {
+    width: auto;
+    max-width: none;
+    padding: 0;
+    box-shadow: none;
+    background: var(--alm-paper) !important;
+  }
+}

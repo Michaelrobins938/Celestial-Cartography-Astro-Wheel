@@ -17,13 +17,14 @@ import TransitClock from "./components/TransitClock";
 import InterpretationCard from "./components/InterpretationCard";
 import CyclesView from "./components/CyclesView";
 import HarmonicsView from "./components/HarmonicsView";
+import ReportView from "./components/ReportView";
 import { Markdown } from "./lib/markdown";
 import { aspectText, lineText, planetText } from "./lib/interpretations";
 import { fmtUTC, ordinalHouse } from "./lib/format";
 import { decodeShare, encodeShare } from "./lib/share";
 import { downloadBlob, svgToPngBlob } from "./lib/exportPng";
 
-type ViewTab = "natal" | "transits" | "progressions" | "draconic" | "cycles" | "harmonics";
+type ViewTab = "natal" | "transits" | "progressions" | "draconic" | "cycles" | "harmonics" | "report";
 
 interface Selection {
   kind: "planet" | "aspect" | "line";
@@ -286,7 +287,7 @@ export default function App() {
   return (
     <div className="flex h-full flex-col bg-zinc-950">
       {/* ---------- header ---------- */}
-      <header className="flex items-center gap-4 border-b border-zinc-800 px-4 py-2.5">
+      <header className="no-print flex items-center gap-4 border-b border-zinc-800 px-4 py-2.5">
         <h1 className="text-sm font-semibold tracking-wide text-zinc-100">
           ✦ CELESTIAL BLUEPRINT
           <span className="ml-2 hidden text-[11px] font-normal text-zinc-500 md:inline">
@@ -369,7 +370,7 @@ export default function App() {
       {/* ---------- main ---------- */}
       <main className="flex min-h-0 flex-1">
         {/* left sidebar */}
-        <aside className="w-80 shrink-0 border-r border-zinc-800 bg-zinc-950">
+        <aside className="no-print w-80 shrink-0 border-r border-zinc-800 bg-zinc-950">
           {tableData.bodies.length > 0 || true ? (
             <PositionsTable
               bodies={tableData.bodies}
@@ -385,7 +386,7 @@ export default function App() {
         {/* center */}
         <section className="flex min-w-0 flex-1 flex-col">
           {/* tabs */}
-          <nav className="flex items-center gap-1 border-b border-zinc-800 px-3 pt-1.5">
+          <nav className="no-print flex items-center gap-1 border-b border-zinc-800 px-3 pt-1.5">
             {(
               [
                 ["natal", "Natal"],
@@ -394,6 +395,7 @@ export default function App() {
                 ["draconic", "Draconic"],
                 ["cycles", "Cycles ⟳"],
                 ["harmonics", "Harmonics ∿"],
+                ["report", "Report ⎙"],
               ] as Array<[ViewTab, string]>
             ).map(([key, label]) => (
               <button
@@ -445,6 +447,8 @@ export default function App() {
               <div className="mx-auto h-full w-full max-w-4xl overflow-hidden">
                 <HarmonicsView />
               </div>
+            ) : tab === "report" ? (
+              <ReportView payload={payload} />
             ) : displayedBase ? (
               <div className="mx-auto h-full max-h-[720px]" style={{ aspectRatio: "1 / 1" }}>
                 <Wheel
@@ -471,8 +475,8 @@ export default function App() {
           </div>
 
           {/* ---------- map ---------- */}
-          {tab !== "cycles" && tab !== "harmonics" && (
-          <div className="flex h-[42%] min-h-0 shrink-0 flex-col border-t border-zinc-800">
+          {tab !== "cycles" && tab !== "harmonics" && tab !== "report" && (
+          <div className="no-print flex h-[42%] min-h-0 shrink-0 flex-col border-t border-zinc-800">
             <div className="flex items-center gap-2 px-3 py-1.5">
               <h2 className="text-xs font-semibold tracking-wider text-zinc-400 uppercase">Astrocartography</h2>
               {acgLoading && <span className="text-[11px] text-indigo-400">solving lines…</span>}
@@ -535,7 +539,7 @@ export default function App() {
         </section>
 
         {/* right sidebar */}
-        <aside className="w-72 shrink-0 border-l border-zinc-800 bg-zinc-950">
+        <aside className="no-print w-72 shrink-0 border-l border-zinc-800 bg-zinc-950">
           <TransitClock
             triggers={transits?.triggers ?? []}
             transitUtc={transits?.transit_utc ?? null}
